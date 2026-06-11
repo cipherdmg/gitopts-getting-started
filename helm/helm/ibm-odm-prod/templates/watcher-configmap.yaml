@@ -1,0 +1,11 @@
+{{- if .Values.customization.watcher.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "odm.watcher-beacon-configmap.fullname" . }}
+  labels:
+    release: {{ .Release.Name }}
+    app.kubernetes.io/component: {{ template "odm.watcher.name" . }}
+data:
+  secrets_sum: ""
+{{- end }}

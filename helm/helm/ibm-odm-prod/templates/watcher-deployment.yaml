@@ -1,0 +1,173 @@
+{{- if and (.Values.customization.watcher.enabled) (.Values.customization.watcher.debug) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ template "odm.watcher.name" . }}
+  labels:
+    app.kubernetes.io/component: {{ template "odm.watcher.name" . }}
+    release: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      release: {{ .Release.Name }}
+      app.kubernetes.io/component: {{ template "odm.watcher.name" . }}
+  template:
+    metadata:
+      labels:
+        release: {{ .Release.Name }}
+        app.kubernetes.io/component: {{ template "odm.watcher.name" . }}
+    spec:
+      {{- if .Values.serviceAccountName }}
+      serviceAccountName: {{ .Values.serviceAccountName }}
+      {{- else }}
+      serviceAccountName: {{ template "fullname" . }}-service-account
+      {{- end }}
+      automountServiceAccountToken: true
+{{ include "odm-spec-security-context" . | indent 6 }}
+      containers:
+      - name: watcher
+{{ include "odm-security-context" . | indent 8 }}
+{{ include "image.tagOrDigest" (dict "containerName" "odm-decisionrunner" "containerTag" .Values.decisionRunner.tagOrDigest "root" .) | indent 8  }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+        - "sleep"
+        - "604800"
+        env:
+        - name: BEACON_NAME
+          value: {{ template "odm.watcher-beacon-configmap.fullname" . }}
+        - name: RELEASE_NAME
+          value: {{ .Release.Name }}
+        volumeMounts:
+        - name: watcher-script-cm
+          mountPath: /tmp
+        {{- if .Values.internalDatabase.secretCredentials }}
+        - name: db-config-secret
+          mountPath: /mnt/secrets/db-config-secret
+          readOnly: true
+        {{- end }}
+        {{- if .Values.customization.baiEmitterSecretRef }}
+        - name: {{ template "odm-baiemitterconfig-secret-volume.fullname" . }}
+          mountPath: /mnt/secrets/{{ template "odm-baiemitterconfig-secret-volume.fullname" . }}
+          readOnly: true
+        {{- end }}
+        {{- if .Values.customization.authSecretRef }}
+        - name: {{ template "odm-auth-secret-volume.fullname" . }}
+          mountPath: /mnt/secrets/{{ template "odm-auth-secret-volume.fullname" . }}
+          readOnly: true
+        {{- end }}
+        {{- if .Values.customization.securitySecretRef }}
+        - name: {{ template "odm-security-secret-volume.fullname" . }}
+          mountPath: /mnt/secrets/{{ template "odm-security-secret-volume.fullname" . }}
+          readOnly: true
+        {{- end }}
+        {{- if .Values.externalCustomDatabase.datasourceRef }}
+        - name: {{ template "odm-custom-secret-ds.fullname" . }}
+          mountPath: /mnt/secrets/{{ template "odm-custom-secret-ds.fullname" . }}
+          readOnly: true
+        {{- end }}
+        {{- if .Values.externalDatabase.secretCredentials }}
+        - name: {{ template "odm.secret.fullname" . }}
+          mountPath: /mnt/secrets/{{ template "odm.secret.fullname" . }}
+          readOnly: true
+        {{- end }}
+        {{- if .Values.externalDatabase.sslSecretRef }}
+        - name: {{ template "odm-externaldatabase-security-secret-volume.fullname" . }}
+          mountPath: /mnt/secrets/{{ template "odm-externaldatabase-security-secret-volume.fullname" . }}
+          readOnly: true
+        {{- end }}
+        {{- if .Values.externalDatabase.decisionCenter.secretCredentials }}
+        - name: "odm-externaldatabase-secretcredentials-decisioncenter"
+          mountPath: /mnt/secrets/odm-externaldatabase-secretcredentials-decisioncenter
+          readOnly: true
+        {{- end }}
+        {{- if .Values.externalDatabase.decisionCenter.sslSecretRef }}
+        - name: "odm-externaldatabase-security-secret-decisioncenter"
+          mountPath: /mnt/secrets/odm-externaldatabase-security-secret-decisioncenter
+          readOnly: true
+        {{- end }}
+        {{- if .Values.externalDatabase.decisionServer.secretCredentials }}
+        - name: "odm-externaldatabase-secretcredentials-decisionserver"
+          mountPath: /mnt/secrets/odm-externaldatabase-security-secret-decisionserver
+          readOnly: true
+        {{- end }}
+        {{- if .Values.externalDatabase.decisionServer.sslSecretRef }}
+        - name: "odm-externaldatabase-security-secret-decisionserver"
+          mountPath: /mnt/secrets/odm-externaldatabase-security-secret-decisionserver
+          readOnly: true
+        {{- end }}
+        {{- if .Values.customization.usageMeteringSecretRef }}
+        - name: {{ template "odm-meteringconfig-secret-volume.fullname" . }}
+          mountPath: /mnt/secrets/{{ template "odm-meteringconfig-secret-volume.fullname" . }}
+          readOnly: true
+        {{- end }}
+        {{- range .Values.customization.trustedCertificateList }}
+        - name: {{ . | printf "%s-trusted-cert-volume" | trunc 63 | trimSuffix "-" }}
+          mountPath: /mnt/secrets/trusted-cert-volume/{{ . -}}
+        {{- end }}
+        {{- range .Values.customization.privateCertificateList }}
+        - name: {{ . | printf "%s-private-cert-volume" | trunc 63 | trimSuffix "-" }}
+          mountPath: /mnt/secrets/private-cert-volume/{{ . -}}
+        {{- end }}
+      volumes:
+      - name: watcher-script-cm
+        configMap:
+          defaultMode: 0755
+          name: {{ template "odm.watcher-script-configmap.fullname" . }}
+      {{- if .Values.internalDatabase.secretCredentials }}
+      - name: db-config-secret
+        {{- include "secret-or-spc" (dict "root" . "ref" .Values.internalDatabase.secretCredentials) | indent 8 -}}
+      {{- end }}
+      {{- if .Values.customization.baiEmitterSecretRef }}
+      - name: {{ template "odm-baiemitterconfig-secret-volume.fullname" . }}
+        {{- include "secret-or-spc" (dict "root" . "ref" .Values.customization.baiEmitterSecretRef) | indent 8 -}}
+      {{- end }}
+      {{- if .Values.customization.authSecretRef }}
+      - name: {{ template "odm-auth-secret-volume.fullname" . }}
+        {{- include "secret-or-spc" (dict "root" . "ref" .Values.customization.authSecretRef) | indent 8 -}}
+      {{- end }}
+      {{- if .Values.customization.securitySecretRef }}
+      - name: {{ template "odm-security-secret-volume.fullname" . }}
+        {{- include "secret-or-spc" (dict "root" . "ref" .Values.customization.securitySecretRef) | indent 8 -}}
+      {{- end }}
+      {{- if .Values.externalCustomDatabase.datasourceRef }}
+      - name: {{ template "odm-custom-secret-ds.fullname" . }}
+        {{- include "secret-or-spc" (dict "root" . "ref" .Values.externalCustomDatabase.datasourceRef) | indent 8 -}}
+      {{- end }}
+      {{- if .Values.externalDatabase.secretCredentials }}
+      - name: {{ template "odm.secret.fullname" . }}
+        {{- include "secret-or-spc" (dict "root" . "ref" .Values.externalDatabase.secretCredentials) | indent 8 -}}
+      {{- end }}
+      {{- if .Values.externalDatabase.sslSecretRef }}
+      - name: {{ template "odm.secret.fullname" . }}
+        {{- include "secret-or-spc" (dict "root" . "ref" .Values.externalDatabase.sslSecretRef) | indent 8 -}}
+      {{- end }}
+      {{- if .Values.externalDatabase.decisionCenter.secretCredentials }}
+      - name: "odm-externaldatabase-secretcredentials-decisioncenter"
+        {{- include "secret-or-spc" (dict "root" . "ref" .Values.externalDatabase.decisionCenter.secretCredentials) | indent 8 -}}
+      {{- end }}
+      {{- if .Values.externalDatabase.decisionCenter.sslSecretRef }}
+      - name: "odm-externaldatabase-security-secret-decisioncenter"
+        {{- include "secret-or-spc" (dict "root" . "ref" .Values.externalDatabase.decisionCenter.sslSecretRef) | indent 8 -}}
+      {{- end }}
+      {{- if .Values.externalDatabase.decisionServer.secretCredentials }}
+      - name: "odm-externaldatabase-secretcredentials-decisionserver"
+        {{- include "secret-or-spc" (dict "root" . "ref" .Values.externalDatabase.decisionServer.secretCredentials) | indent 8 -}}
+      {{- end }}
+      {{- if .Values.externalDatabase.decisionServer.sslSecretRef }}
+      - name: "odm-externaldatabase-security-secret-decisionserver"
+        {{- include "secret-or-spc" (dict "root" . "ref" .Values.externalDatabase.decisionServer.sslSecretRef) | indent 8 -}}
+      {{- end }}
+      {{- if .Values.customization.usageMeteringSecretRef }}
+      - name: {{ template "odm-meteringconfig-secret-volume.fullname" . }}
+        {{- include "secret-or-spc" (dict "root" . "ref" .Values.customization.usageMeteringSecretRef) | indent 8 -}}
+      {{- end}}
+      {{- range .Values.customization.trustedCertificateList }}
+      - name: {{ . | printf "%s-trusted-cert-volume" | trunc 63 | trimSuffix "-" }}
+        {{- include "secret-or-spc" (dict "root" $ "ref" .) | indent 8 -}}
+      {{- end}}
+      {{- range .Values.customization.privateCertificateList }}
+      - name: {{ . | printf "%s-private-cert-volume" | trunc 63 | trimSuffix "-" }}
+        {{- include "secret-or-spc" (dict "root" $ "ref" .) | indent 8 -}}
+      {{- end}}
+{{- include "odm-pullsecret-spec" . | indent 6 }}
+{{- end }}

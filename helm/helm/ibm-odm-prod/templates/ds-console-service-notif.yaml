@@ -1,0 +1,20 @@
+{{- if or .Values.decisionServerRuntime.enabled  .Values.decisionRunner.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "odm.decisionserverconsole.notif.fullname" . }}
+  labels:
+{{ include "odm-additional-labels" (dict "componentName" "decisionServerConsole" "root" .) | indent 4 }}
+spec:
+  selector:
+    app: {{ template "fullname" . }}
+    release: {{ .Release.Name }}
+    run: {{ template "odm.decisionserverconsole.fullname" . }}
+  type: ClusterIP
+{{ include "odm-service-ipfamilypolicy" . | indent 2 }}
+{{ include "odm-service-ip-families" . | indent 2 }}
+  ports:
+   - name: notification
+     protocol: TCP
+     port: 1883
+{{- end }}

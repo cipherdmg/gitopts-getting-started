@@ -1,0 +1,19 @@
+{{- if and (empty .Values.decisionServerRuntime.jvmOptionsRef) (.Values.decisionServerRuntime.enabled) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name:  {{ template "odm.ds-runtime-jvm-options-configmap.fullname" . }}
+  labels:
+{{ include "odm-additional-labels" (dict "componentName" "decisionServerRuntime" "root" .) | indent 4 }}
+data:
+  dsr-jvm-options: |
+    -Duser.timezone=Europe/Paris
+    -Dcom.ibm.jsse2.overrideDefaultTLS=true
+    -Djdk.nativeDigest=false
+    -Xtune:throughput
+    {{- if .Values.customization.enableFips }}
+    -Dsemeru.fips=true
+    -Dsemeru.customprofile=OpenJCEPlusFIPS.FIPS140-3-withPKCS11
+    -Djava.security.properties=/opt/ibm/wlp/usr/servers/defaultServer/jvm/enablefips-java.security
+    {{- end }}
+{{- end }}

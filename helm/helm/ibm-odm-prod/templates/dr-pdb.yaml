@@ -1,0 +1,11 @@
+{{- if not (empty (.Values.decisionRunner.podDisruptionBudget)) }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "odm-dr-pdb.fullname" . }}
+spec:
+{{ toYaml .Values.decisionRunner.podDisruptionBudget | indent 2 }}
+  selector:
+    matchLabels:
+      run: {{ template "odm.decisionrunner.fullname" . }}
+{{- end }}

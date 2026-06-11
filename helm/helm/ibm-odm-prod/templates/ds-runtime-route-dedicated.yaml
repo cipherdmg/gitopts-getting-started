@@ -1,0 +1,38 @@
+{{- if and .Values.decisionServerRuntime.enabled .Values.service.enableRoute  (not (empty .Values.decisionServerRuntime.dedicated))}}
+{{- range $service:=.Values.decisionServerRuntime.dedicated }}
+{{ with $ -}}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ template "odm.decisionserverruntime.dedicated.fullname" dict "root" . "service" $service }}
+  annotations:
+    haproxy.router.openshift.io/balance: leastconn
+  labels:
+    dedicated-decisions-service: enabled
+    dedicated-decisions-service/name: {{ $service.name }}
+{{ include "odm-additional-labels" (dict "componentName" "decisionServerRuntime" "root" .) | indent 4 }}
+spec:
+  {{- if not (empty .Values.decisionServerRuntime.routeName ) }}
+  host: {{ .Values.decisionServerRuntime.routeName }}
+  {{ else }}
+  {{- if not (empty .Values.service.hostname) }}
+  host: decisionserverruntime-{{ $service.name | replace "_" "-" | trimSuffix "-" | lower }}.odm.{{ .Release.Name }}.{{ .Values.service.hostname }}
+  {{- end }}
+  {{- end }}
+  port:
+  {{- if .Values.service.enableTLS }}
+    targetPort: decisionserverruntime-https
+  tls:
+    termination: passthrough
+  {{ else }}
+    targetPort: decisionserverruntime
+  {{- end }}
+  to:
+    kind: Service
+    name:  {{ template "odm.decisionserverruntime.dedicated.fullname" dict "root" . "service" $service }}
+    weight: 100
+  wildcardPolicy: None
+---
+{{- end }}
+{{- end }}
+{{- end }}

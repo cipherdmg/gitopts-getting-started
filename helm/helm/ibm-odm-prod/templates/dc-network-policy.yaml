@@ -1,0 +1,46 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- if .Values.decisionCenter.enabled }}
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ template "odm.dc-network-policy.fullname" . }}
+  labels:
+{{ include "odm-additional-labels" (dict "componentName" "decisionCenter" "root" .) | indent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      run: {{ template "odm.decisioncenter.fullname" . }}
+  ingress:
+{{- if not (empty (.Values.decisionCenter.networkPolicy.ingress)) }}
+{{ toYaml .Values.decisionCenter.networkPolicy.ingress | indent 2 }}
+{{- else }}
+{{- if not (empty (.Values.networkPolicy.ingress)) }}
+{{ toYaml .Values.networkPolicy.ingress | indent 2 }}
+{{- else }}
+{{- if not (empty (.Release.Namespace)) }}
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: {{ .Release.Namespace }}
+{{- end }}
+  # Allow web access to the UI
+  - ports:
+    {{- if .Values.service.enableTLS }}
+    - port: 9453
+    {{ else }}
+    - port: 9060
+    {{- end }}
+{{- end }}
+{{- end }}
+  egress:
+{{- if not (empty (.Values.decisionCenter.networkPolicy.egress)) }}
+{{ toYaml .Values.decisionCenter.networkPolicy.egress | indent 2 }}
+{{- else }}
+{{- if not (empty (.Values.networkPolicy.egress)) }}
+{{ toYaml .Values.networkPolicy.egress | indent 2 }}
+{{- else }}
+  - {}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

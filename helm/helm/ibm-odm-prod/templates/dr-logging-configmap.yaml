@@ -1,0 +1,27 @@
+{{- if and (empty .Values.decisionRunner.loggingRef) (.Values.decisionRunner.enabled) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name:  {{ template "odm.dr-logging-configmap.fullname" . }}
+  labels:
+{{ include "odm-additional-labels" (dict "componentName" "decisionRunner" "root" .) | indent 4 }}
+data:
+{{- if or .Values.customization.enableAuditLog .Values.decisionServerConsole.enableAuditLog }}
+  dr-logging: |
+    <server>
+      <logging traceFileName="stdout" traceFormat="BASIC" traceSpecification="*=audit:com.ibm.rules.*=info:ilog.rules.*=info" consoleLogLevel="INFO"/>
+      <auditFileHandler logDirectory="/logs" maxFiles="5" maxFileSize="5" compact="true"/>
+      <!-- Uncomment to get access logs
+      <httpAccessLogging filepath="/logs/access.log" id="accessLogging"/>
+      -->
+    </server>
+{{- else }}
+  dr-logging: |
+    <server>
+      <logging traceFileName="stdout" traceFormat="BASIC" traceSpecification="*=audit:com.ibm.rules.*=info:ilog.rules.*=info" consoleLogLevel="INFO"/>
+      <!-- Uncomment to get access logs
+      <httpAccessLogging filepath="/logs/access.log" id="accessLogging"/>
+      -->
+    </server>
+{{- end }}
+{{- end }}

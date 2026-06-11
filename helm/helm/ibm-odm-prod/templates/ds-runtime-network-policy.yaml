@@ -1,0 +1,50 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- if .Values.decisionServerRuntime.enabled }}
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ template "odm.ds-runtime-network-policy.fullname" . }}
+  labels:
+{{ include "odm-additional-labels" (dict "componentName" "decisionServerRuntime" "root" .) | indent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      run: {{ template "odm.decisionserverruntime.fullname" . }}
+  ingress:
+{{- if not (empty (.Values.decisionServerRuntime.networkPolicy.ingress)) }}
+{{ toYaml .Values.decisionServerRuntime.networkPolicy.ingress | indent 2 }}
+{{- else }}
+{{- if not (empty (.Values.networkPolicy.ingress)) }}
+{{ toYaml .Values.networkPolicy.ingress | indent 2 }}
+{{- else }}
+  # Allow web access to the UI
+  - ports:
+    {{- if .Values.service.enableTLS }}
+    - port: 9443
+    {{ else }}
+    - port: 9080
+    {{- end }}
+  # Allow inbound connections from DSC pod
+  - from:
+{{- if not (empty (.Release.Namespace)) }}
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: {{ .Release.Namespace }}
+{{- end }}
+    - podSelector:
+        matchLabels:
+          run: {{ template "odm.decisionserverconsole.fullname" . }}
+{{- end }}
+{{- end }}
+  egress:
+{{- if not (empty (.Values.decisionServerRuntime.networkPolicy.egress)) }}
+{{ toYaml .Values.decisionServerRuntime.networkPolicy.egress | indent 2 }}
+{{- else }}
+{{- if not (empty (.Values.networkPolicy.egress)) }}
+{{ toYaml .Values.networkPolicy.egress | indent 2 }}
+{{- else }}
+  - {}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

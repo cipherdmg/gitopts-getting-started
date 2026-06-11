@@ -1,0 +1,20 @@
+{{- if eq (include "isInternalDatabase" .) "true"  }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "odm.dbserver.fullname" . }}
+  labels:
+{{ include "odm-additional-labels" (dict "componentName" "dbserver" "root" .) | indent 4 }}
+spec:
+  selector:
+    app: {{ template "fullname" . }}
+    release: {{ .Release.Name }}
+    run: {{ template "odm.dbserver.fullname" . }}
+
+  type: ClusterIP
+{{ include "odm-service-ipfamilypolicy" . | indent 2 }}
+{{ include "odm-service-ip-families" . | indent 2 }}
+  ports:
+   - protocol: TCP
+     port: 5432
+{{- end }}

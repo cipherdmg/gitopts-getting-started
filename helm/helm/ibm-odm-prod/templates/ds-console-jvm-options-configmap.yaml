@@ -1,0 +1,19 @@
+{{- if and (empty .Values.decisionServerConsole.jvmOptionsRef) (or .Values.decisionRunner.enabled .Values.decisionServerRuntime.enabled) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name:  {{ template "odm.ds-console-jvm-options-configmap.fullname" . }}
+  labels:
+{{ include "odm-additional-labels" (dict "componentName" "decisionServerConsole" "root" .) | indent 4 }}
+data:
+  dsc-jvm-options: |
+    -Duser.timezone=Europe/Paris
+    -Dcom.ibm.jsse2.overrideDefaultTLS=true
+    -Djdk.nativeDigest=false
+    {{- if .Values.customization.enableFips }}
+    -Dhttps.protocols=TLSv1.2
+    -Dsemeru.fips=true
+    -Dsemeru.customprofile=OpenJCEPlusFIPS.FIPS140-3-withPKCS11
+    -Djava.security.properties=/opt/ibm/wlp/usr/servers/defaultServer/jvm/enablefips-java.security
+    {{- end }}
+{{- end }}

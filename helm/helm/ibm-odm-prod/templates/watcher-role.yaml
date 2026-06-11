@@ -1,0 +1,17 @@
+{{- if .Values.customization.watcher.enabled }}
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Release.Name }}-odm-watcher-role
+  labels:
+    release: {{ .Release.Name }}
+    app.kubernetes.io/component: {{ template "odm.watcher.name" . }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - pods
+  verbs:
+  - "*"
+{{- end }}

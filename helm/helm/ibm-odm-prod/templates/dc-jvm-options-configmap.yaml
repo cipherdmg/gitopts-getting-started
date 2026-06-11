@@ -1,0 +1,22 @@
+{{- if and (empty .Values.decisionCenter.jvmOptionsRef) (.Values.decisionCenter.enabled) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name:  {{ template "odm.dc-jvm-options-configmap.fullname" . }}
+  labels:
+{{ include "odm-additional-labels" (dict "componentName" "decisionCenter" "root" .) | indent 4 }}
+data:
+  dc-jvm-options: |
+    -Duser.timezone=Europe/Paris
+    -Dcom.ibm.jsse2.overrideDefaultTLS=true
+    -Dclient.encoding.override=UTF-8
+    -Dfile.encoding=UTF-8
+    -Djdk.nativeDigest=false
+    --add-exports=java.xml/com.sun.org.apache.xerces.internal.parsers=ALL-UNNAMED
+    {{- if .Values.customization.enableFips }}
+    -Dsemeru.fips=true
+    -Dsemeru.customprofile=OpenJCEPlusFIPS.FIPS140-3-withPKCS11
+    -Djava.security.properties=/opt/ibm/wlp/usr/servers/defaultServer/jvm/enablefips-java.security
+    -Dodm.solr.embedded.disableSSL=true
+    {{- end }}
+{{- end }}

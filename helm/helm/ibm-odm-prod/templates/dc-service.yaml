@@ -1,0 +1,32 @@
+{{- if .Values.decisionCenter.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "odm.decisioncenter.fullname" . }}
+  labels:
+{{ include "odm-additional-labels" (dict "componentName" "decisionCenter" "root" .) | indent 4 }}
+spec:
+  sessionAffinity : ClientIP
+  selector:
+    app: {{ template "fullname" . }}
+    release: {{ .Release.Name }}
+    run: {{ template "odm.decisioncenter.fullname" . }}
+
+{{ include "odm-service-ipfamilypolicy" . | indent 2 }}
+{{ include "odm-service-ip-families" . | indent 2 }}
+{{ include "odm-service-type" . | indent 2 }}
+  ports:
+   - protocol: TCP
+     port: 9453
+     {{- if .Values.service.enableTLS }}
+     name: decisioncenter-https
+     targetPort: 9453
+     {{- if .Values.dba.istio.enabled }}
+     name: decisioncenter
+     targetPort: 9060    
+     {{- end }}  
+     {{ else }}
+     name: decisioncenter
+     targetPort: 9060
+     {{- end }}
+{{- end }}

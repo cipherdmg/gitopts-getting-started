@@ -1,0 +1,64 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- if or .Values.decisionServerRuntime.enabled  .Values.decisionRunner.enabled }}
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: {{ template "odm.ds-console-network-policy.fullname" . }}
+  labels:
+{{ include "odm-additional-labels" (dict "componentName" "decisionServerConsole" "root" .) | indent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      run: {{ template "odm.decisionserverconsole.fullname" . }}
+  ingress:
+{{- if not (empty (.Values.decisionServerConsole.networkPolicy.ingress)) }}
+{{ toYaml .Values.decisionServerConsole.networkPolicy.ingress | indent 2 }}
+{{- else }}
+{{- if not (empty (.Values.networkPolicy.ingress)) }}
+{{ toYaml .Values.networkPolicy.ingress | indent 2 }}
+{{- else }}
+  # Allow web access to the UI
+  - ports:
+    {{- if .Values.service.enableTLS }}
+    - port: 9443
+    {{ else }}
+    - port: 9080
+    {{- end }}
+    - port: 1883
+  # Allow inbound connections from DC, DR and DSR pods
+  - from:
+{{- if not (empty (.Release.Namespace)) }}
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: {{ .Release.Namespace }}
+{{- end }}
+    - podSelector:
+        matchLabels:
+          run: {{ template "odm.decisioncenter.fullname" . }}
+    - podSelector:
+        matchLabels:
+          run: {{ template "odm.decisionrunner.fullname" . }}
+    - podSelector:
+        matchLabels:
+          run: {{ template "odm.decisionserverruntime.fullname" . }}
+    {{- range $service:=.Values.decisionServerRuntime.dedicated }}
+    {{- with $ }}
+    - podSelector:
+        matchLabels:
+          run: {{ template "odm.decisionserverruntime.dedicated.fullname" dict "root" . "service" $service }}
+    {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}
+  egress:
+{{- if not (empty (.Values.decisionServerConsole.networkPolicy.egress)) }}
+{{ toYaml .Values.decisionServerConsole.networkPolicy.egress | indent 2 }}
+{{- else }}
+{{- if not (empty (.Values.networkPolicy.egress)) }}
+{{ toYaml .Values.networkPolicy.egress | indent 2 }}
+{{- else }}
+  - {}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

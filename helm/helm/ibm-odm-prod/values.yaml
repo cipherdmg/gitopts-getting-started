@@ -1,0 +1,538 @@
+# Default values for odmcharts.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Accept the terms of the IBM license by setting the license parameter to "true"
+license: false
+
+# Users password is required if authSecretRef is not set.
+# Set the password for odm default users.
+usersPassword: ""
+
+image:
+  repository: ""
+  tag: 9.5.0.1-IF010
+  pullPolicy: IfNotPresent
+## Optionally specify an list of imagePullSecrets.
+## Secrets must be manually created in the namespace.
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  pullSecrets: []
+  # - admin.registrykey
+  # - admin.registrykey
+
+  arch: "" # deprecated
+  useArch: false # only for support
+
+serviceAccountName: ""
+
+service:
+  enableTLS: true
+  # https://kubernetes.io/docs/concepts/services-networking/dual-stack/
+  ipFamilies:
+  ipFamilyPolicy:
+  type: NodePort
+  enableRoute: false
+  hostname: ""
+  ingress:
+    annotations:
+    class:
+    enabled: false
+    host:
+    tlsHosts: []
+    tlsSecretRef:
+
+decisionServerRuntime:
+  annotations: {}
+  # dedicated is a list of dicts with the following contents:
+  # - name: "<servicename>" (mandatory)
+  #   paths: [] (mandatory)
+  #   resources: {} (optional, same format as decisionServerRuntime.resources below)
+  #   webConfigRef: "" (optional)
+  #   xuConfigRef: "" (optional)
+  #   autoscaling: {} #optional
+  dedicated: []
+  enabled: true
+  tagOrDigest:
+  replicaCount: 1
+  loggingRef:
+  jvmOptionsRef:
+  monitorRef:
+  logstashCollectorRef:
+  libertyHookRef:
+  xuConfigRef:
+  webConfigRef:
+  extendRoleMapping: false
+  enableTLSAuth:
+  customScriptsRef:
+  lifecycleHooksSecretRef:
+  initContainer:
+    image:
+    command:
+    configRef:
+    configOidcRef:
+    resources:
+      requests:
+        cpu: 200m
+        memory: 100Mi
+      limits:
+        cpu: 500m
+        memory: 200Mi
+    existingClaimName:
+    env:
+  contextRoot:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+      ephemeral-storage: 200Mi
+    limits:
+      cpu: 2
+      memory: 4096Mi
+      ephemeral-storage: 1G
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 3
+    targetAverageUtilization:           # deprecated, replaced by targetAverageCpuUtilization
+    targetAverageCpuUtilization: 300
+    targetAverageMemoryUtilization: 600
+    behavior:
+  nodeAffinity:
+  customPodAntiAffinity:
+  podDisruptionBudget:
+  tolerations:
+  topologySpreadConstraints: []
+  labels: {}
+  networkPolicy:
+    egress:
+    ingress:
+  downloadUrl: []
+  # - url1
+  # - url2
+  enableAuditLog: false
+  sidecar:
+    enabled: false
+    image:
+    confSecretRef:
+    resources:
+    probes:
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+  enableMutualTLS: false
+  routeName:
+
+decisionServerConsole:
+  annotations: {}
+  tagOrDigest:
+  loggingRef:
+  jvmOptionsRef:
+  monitorRef:
+  logstashCollectorRef:
+  libertyHookRef:
+  lifecycleHooksSecretRef:
+  extendRoleMapping: false
+  title:
+  description:
+  customScriptsRef:
+  webConfigRef:
+  runtime:
+    webConfigRef:
+  initContainer:
+    image:
+    command:
+    configRef:
+    configOidcRef:
+    resources:
+      requests:
+        cpu: 200m
+        memory: 100Mi
+      limits:
+        cpu: 500m
+        memory: 200Mi
+    existingClaimName:
+    env:
+  contextRoot:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+      ephemeral-storage: 200Mi
+    limits:
+      cpu: 2
+      memory: 1024Mi
+      ephemeral-storage: 1G
+  nodeAffinity:
+  customPodAntiAffinity:
+  podDisruptionBudget:
+  tolerations:
+  topologySpreadConstraints: []
+  labels: {}
+  networkPolicy:
+    egress:
+    ingress:
+  downloadUrl: []
+  # - url1
+  # - url2
+  enableAuditLog: false
+  sidecar:
+    enabled: false
+    image:
+    confSecretRef:
+    resources:
+    probes:
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+  enableMutualTLS: false
+  routeName:
+
+decisionCenter:
+  annotations: {}
+  enabled: true
+  tagOrDigest:
+  persistenceLocale: en_US
+  replicaCount: 1
+  customlibPvc:
+  loggingRef:
+  jvmOptionsRef:
+  monitorRef:
+  logstashCollectorRef:
+  libertyHookRef:
+  lifecycleHooksSecretRef:
+  webConfigRef:
+  extendRoleMapping: false
+  disableAllAuthenticatedUser: false
+  customScriptsRef:
+  initContainer:
+    image:
+    command:
+    configRef:
+    configOidcRef:
+    resources:
+      requests:
+        cpu: 200m
+        memory: 100Mi
+      limits:
+        cpu: 500m
+        memory: 200Mi
+    existingClaimName:
+    env:
+  contextRoot:
+  refererList:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1500Mi
+      ephemeral-storage: 1G
+    limits:
+      cpu: 2
+      memory: 4096Mi
+      ephemeral-storage: 2G
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 3
+    targetAverageUtilization:           # deprecated, replaced by targetAverageCpuUtilization
+    targetAverageCpuUtilization: 300
+    targetAverageMemoryUtilization: 200
+    behavior:
+  nodeAffinity:
+  customPodAntiAffinity:
+  podDisruptionBudget:
+  tolerations:
+  topologySpreadConstraints: []
+  labels: {}
+  networkPolicy:
+    egress:
+    ingress:
+  downloadUrl: []
+  # - url1
+  # - url2
+  disableDbDump:
+  enableAuditLog: false
+  sidecar:
+    enabled: false
+    image:
+    confSecretRef:
+    resources:
+    probes:
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+  enableMutualTLS: false
+  routeName:
+    
+decisionRunner:
+  annotations: {}
+  enabled: true
+  tagOrDigest:
+  replicaCount: 1
+  loggingRef:
+  jvmOptionsRef:
+  monitorRef:
+  logstashCollectorRef:
+  libertyHookRef:
+  lifecycleHooksSecretRef:
+  extendRoleMapping: false
+  customScriptsRef:
+  initContainer:
+    image:
+    command:
+    configRef:
+    configOidcRef:
+    resources:
+      requests:
+        cpu: 200m
+        memory: 100Mi
+      limits:
+        cpu: 500m
+        memory: 200Mi
+    existingClaimName:
+    env:
+  contextRoot:
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+      ephemeral-storage: 200Mi
+    limits:
+      cpu: 2
+      memory: 4096Mi
+      ephemeral-storage: 1G
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 3
+    targetAverageUtilization:           # deprecated, replaced by targetAverageCpuUtilization
+    targetAverageCpuUtilization: 300
+    targetAverageMemoryUtilization: 600
+    behavior:
+  resURL:
+  nodeAffinity:
+  customPodAntiAffinity:
+  podDisruptionBudget:
+  tolerations:
+  topologySpreadConstraints: []
+  labels: {}
+  networkPolicy:
+    egress:
+    ingress:
+  downloadUrl: []
+  # - url1
+  # - url2
+  enableAuditLog: false
+  sidecar:
+    enabled: false
+    image:
+    confSecretRef:
+    resources:
+    probes:
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+  enableMutualTLS: false
+  routeName:
+
+internalDatabase:
+  annotations: {}
+  labels: {}
+  databaseName: odmdb
+  tagOrDigest:
+  user: odmusr # deprecated, please use secretCredentials
+  password: "odmpwd" # deprecated, please use secretCredentials
+  secretCredentials: ""
+  populateSampleData: false
+  persistence:
+    enabled: true
+    useDynamicProvisioning: false
+    storageClassName: ""
+    resources:
+      requests:
+        storage: 5Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+      ephemeral-storage: 500Mi
+    limits:
+      cpu: 2
+      memory: 4096Mi
+      ephemeral-storage: 1G
+  runAsUser: 26
+
+externalDatabase:
+  type: ""
+  serverName: ""
+  databaseName: ""
+  url: ""
+  user: "" # deprecated, please use secretCredentials
+  password: "" # deprecated, please use secretCredentials
+  secretCredentials: ""
+  port: ""
+  sslSecretRef:
+  ## Optionally specify a list of driversUrl using --set externalDatabase.driversUrl="{url1,url2}" in cli
+  driversUrl: []
+  # - url1
+  # - url2
+  decisionServer:
+    type: ""
+    serverName: ""
+    databaseName: ""
+    url: ""
+    user: "" # deprecated, please use secretCredentials
+    password: "" # deprecated, please use secretCredentials
+    secretCredentials: ""
+    port: ""
+    sslSecretRef:
+    ## Optionally specify a list of driversUrl using --set externalDatabase.driversUrl="{url1,url2}" in cli
+    driversUrl: []
+    # - url1
+    # - url2
+  decisionCenter:
+    type: ""
+    serverName: ""
+    databaseName: ""
+    url: ""
+    user: "" # deprecated, please use secretCredentials
+    password: "" # deprecated, please use secretCredentials
+    secretCredentials: ""
+    port: ""
+    sslSecretRef:
+    ## Optionally specify a list of driversUrl using --set externalDatabase.driversUrl="{url1,url2}" in cli
+    driversUrl: []
+    # - url1
+    # - url2
+externalCustomDatabase:
+  datasourceRef:
+  driverPvc:
+
+readinessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 30
+  failureThreshold: 45
+  timeoutSeconds: 5
+
+livenessProbe:
+  initialDelaySeconds: 300
+  periodSeconds: 30
+  failureThreshold: 4
+  timeoutSeconds: 5
+
+startupProbe:
+  initialDelaySeconds: 15
+  failureThreshold: 30
+  periodSeconds: 20
+  timeoutSeconds: 5
+
+customization:
+  annotations: {}
+  authSecretRef:
+  baiEmitterSecretRef:
+  ephemeralStorage:
+    definition:
+    className:
+    capacity: "10Gi"
+  cloudpakID:
+  cloudpakName: "IBM Cloud Pak for Business Automation"
+  cloudpakVersion:
+  cp4baLicense: false
+  customScriptsRef:
+  dedicatedNodeLabel:
+  deployForProduction: true
+  disableWSJavaAgent: false
+  enableFips: false
+  enabledCiphers:
+  isMultipleAz: false
+  kubeVersion: "ODM on K8s"
+  labels: {}
+  libertyHookRef:
+  logstashCollectorRef:
+  meteringSendPeriod:
+  meteringServerUrl:
+  monitorRef:
+  nodeAffinity:
+  privateCertificateList:
+  productID:
+  productName:
+  productSemVer:
+  productVersion:
+  readOnlyRootFilesystem: true
+  runAsUser: 1001
+  securitySecretRef:
+  tolerations:
+  trustedCertificateList:
+  usageMeteringSecretRef:
+  vault: "" # deprecated, use vault.type instead
+  seccompProfile:
+    type:
+    localhostProfile:
+  watcher:
+    enabled: false
+    debug: false
+    schedule:
+  downloadUrl: []
+  enableAuditLog: false
+  sidecar:
+    enabled: false
+    image:
+    confSecretRef:
+    resources:
+    probes:
+  enablePodMonitor: true
+  enableMutualTLS: false
+
+vault:
+  enabled: false
+  type: "" # Must be one of [initcontainer, spc] when vault.enabled=true
+
+dba:
+# if no rootCaSecretRef is defined then no keytoolinit init-container
+  rootCaSecretRef:
+  ldapSslSecretRef:
+  passwordSecretRef:
+  keytoolInitContainer:
+    image:
+    imagePullPolicy:
+    imagePullSecret:
+  istio:
+    enabled: false
+
+oidc:
+  enabled: false
+  applyToComponents: []
+  # - decisionCenter
+  # - decisionRunner
+  # - decisionServerConsole
+  # - decisionServerRuntime
+
+  # mode: Can take values : "PKCE" or "PRIVATE_KEY_JWT"
+  mode:
+  keyAliasName:
+  serverUrl:
+  registrationUrl:
+  adminRef:
+  redirectUrisRef:
+  clientRef:
+  provider:
+  allowedDomains:
+  disableLoginPanel:
+  initContainer:
+    image:
+    command:
+    configRef:
+    resources:
+      requests:
+        cpu: 200m
+        memory: 100Mi
+      limits:
+        cpu: 500m
+        memory: 200Mi
+    existingClaimName:
+    env:
+
+networkPolicy:
+  # Enable creation of NetworkPolicy resources.
+  enabled: true
+  egress:
+  ingress:

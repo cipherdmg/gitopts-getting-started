@@ -1,0 +1,27 @@
+{{- if and (empty .Values.decisionServerConsole.loggingRef) (or .Values.decisionRunner.enabled .Values.decisionServerRuntime.enabled) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name:  {{ template "odm.ds-console-logging-configmap.fullname" . }}
+  labels:
+{{ include "odm-additional-labels" (dict "componentName" "decisionServerConsole" "root" .) | indent 4 }}
+data:
+{{- if or .Values.customization.enableAuditLog .Values.decisionServerConsole.enableAuditLog }}
+  dsc-logging: |
+    <server>
+      <logging traceFileName="stdout" traceFormat="BASIC" traceSpecification="*=audit:com.ibm.rules.*=info:ilog.rules.*=info" consoleLogLevel="INFO"/>
+      <auditFileHandler logDirectory="/logs" maxFiles="5" maxFileSize="5" compact="true"/>
+      <!-- Uncomment to get access logs
+      <httpAccessLogging filepath="/logs/access.log" id="accessLogging"/>
+      -->
+    </server>
+{{- else }}
+  dsc-logging: |
+    <server>
+      <logging traceFileName="stdout" traceFormat="BASIC" traceSpecification="*=audit:com.ibm.rules.*=info:ilog.rules.*=info" consoleLogLevel="INFO"/>
+      <!-- Uncomment to get access logs
+      <httpAccessLogging filepath="/logs/access.log" id="accessLogging"/>
+      -->
+    </server>
+{{- end }}
+{{- end }}

@@ -1,0 +1,21 @@
+{{- if and (or ( not (empty .Values.decisionServerConsole.monitorRef)) ( not (empty .Values.customization.monitorRef))) (or .Values.decisionRunner.enabled .Values.decisionServerRuntime.enabled) (.Values.customization.enablePodMonitor) ( .Capabilities.APIVersions.Has "monitoring.coreos.com/v1/PodMonitor") }}
+kind: PodMonitor
+apiVersion: monitoring.coreos.com/v1
+metadata:
+  name: {{ template "odm-ds-console-pod-monitor.fullname" . }}
+  labels:
+{{ include "odm-additional-labels" (dict "componentName" "decisionServerConsole" "root" .) | indent 4 }}
+spec:
+  selector:
+    matchLabels:
+      run: {{ template "odm.decisionserverconsole.fullname" . }}
+  podMetricsEndpoints:
+  - port: dsc-port
+{{- if .Values.service.enableTLS }}
+    scheme: https
+    tlsConfig:
+      insecureSkipVerify: true
+{{- else }}
+    scheme: http
+{{- end }}
+{{- end -}}
