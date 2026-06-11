@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - secret-odm-sno-uat-ds-auth-sso.yaml
+  - dbserver-deployment.yaml
+  - dbserver-network-policy.yaml
+  - dbserver-pvclaim.yaml
+  - dbserver-service.yaml
+  - dc-deployment.yaml
+  - dc-jvm-options-configmap.yaml
+  - dc-logging-configmap.yaml
+  - dc-network-policy.yaml
+  - dc-service.yaml
+  - dc-web-configmap.yaml
+  - ds-console-deployment.yaml
+  - ds-console-jvm-options-configmap.yaml
+  - ds-console-logging-configmap.yaml
+  - ds-console-network-policy.yaml
+  - ds-console-service.yaml
+  - ds-console-service-notif.yaml
+  - ds-console-web-configmap.yaml
+  - ds-runtime-deployment.yaml
+  - ds-runtime-jvm-options-configmap.yaml
+  - ds-runtime-logging-configmap.yaml
+  - ds-runtime-network-policy.yaml
+  - ds-runtime-service.yaml
+  - ds-runtime-web-configmap.yaml
+  - ds-runtime-xu-configmap.yaml
+  - secret.yaml
+  - service-account.yaml
