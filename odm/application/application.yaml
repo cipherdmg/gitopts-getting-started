@@ -8,7 +8,7 @@ spec:
     namespace: bgd
     server: https://kubernetes.default.svc
   source:
-    path: .                                    # <-- Change this to the root directory
+    path: ibm-odm-prod                        # <-- CHANGE THIS BACK TO YOUR FOLDER
     repoURL: https://github.com/cipherdmg/gitopts-getting-started
     targetRevision: HEAD
   project: default
@@ -17,4 +17,10 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
+      - CreateNamespace=false
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m

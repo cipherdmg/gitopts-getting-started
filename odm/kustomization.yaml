@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - secret-odm-sno-uat-ds-auth-sso.yaml
+  # - secret-ibm-entitlement-key.yaml
+  - helm/dbserver-deployment.yaml
+  - helm/dbserver-network-policy.yaml
+  - helm/dbserver-pvclaim.yaml
+  - helm/dbserver-service.yaml
+  - helm/dc-deployment.yaml
+  - helm/dc-jvm-options-configmap.yaml
+  - helm/dc-logging-configmap.yaml
+  - helm/dc-network-policy.yaml
+  - helm/dc-service.yaml
+  - helm/dc-web-configmap.yaml
+  - helm/ds-console-deployment.yaml
+  - helm/ds-console-jvm-options-configmap.yaml
+  - helm/ds-console-logging-configmap.yaml
+  - helm/ds-console-network-policy.yaml
+  - helm/ds-console-service.yaml
+  - helm/ds-console-service-notif.yaml
+  - helm/ds-console-web-configmap.yaml
+  - helm/ds-runtime-deployment.yaml
+  - helm/ds-runtime-jvm-options-configmap.yaml
+  - helm/ds-runtime-logging-configmap.yaml
+  - helm/ds-runtime-network-policy.yaml
+  - helm/ds-runtime-service.yaml
+  - helm/ds-runtime-web-configmap.yaml
+  - helm/ds-runtime-xu-configmap.yaml
+  - helm/secret.yaml
+  - helm/service-account.yaml
