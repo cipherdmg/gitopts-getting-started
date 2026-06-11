@@ -1,0 +1,287 @@
+﻿kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: k6-scripts-config
+  namespace: k6
+  uid: 4294056f-4a28-40e6-87ec-9fc614afa363
+  resourceVersion: '398827'
+  creationTimestamp: '2026-06-10T23:40:00Z'
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"k6-scripts-config.js":"/* eslint-disable camelcase */\n/* eslint-disable @stylistic/max-len */\n// @ts-nocheck\n\n/**\n * K6 Pizza Test..\n * https://petstore3.swagger.io/\n *\n * @author Dave Spriet (spriet@ca.ibm.com)\n * @file k6-swagger-test.ts\n * @see [globals](https://github.com/sindresorhus/globals)\n * @see [Performance testing with Grafana k6 and GitHub Actions](https://grafana.com/blog/performance-testing-with-grafana-k6-and-github-actions)\n * @see [Mastering Performance Testing with K6 and JavaScript.](https://blog.stackademic.com/mastering-performance-testing-with-k6-and-javascript-6349ed235458)\n * @see [Performance Testing Using K6](https://www.linkedin.com/pulse/performance-testing-using-k6-priya-nupur-evhwc)\n * @see [No Connection Reuse](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/#no-connection-reuse)\n * @example\n * ```bash\n * k6 run k6-swagger-test-pet.js\n *\n * k6 run -e BASE_URL=http://rhel-lab1:8080/api/v3 k6-swagger-test-pet.js\n *\n * BASE_URL=http://rhel-lab1:8080/api/v3 k6 run k6-swagger-test-pet.js\n * ```\n */\nimport { textSummary } from \"https://jslib.k6.io/k6-summary/0.0.2/index.js\";\nimport { check, sleep } from \"k6\";\nimport exec from \"k6/execution\"; // Import execution to get VU info\nimport http from \"k6/http\";\nimport { Rate } from \"k6/metrics\";\n\n/**\n * Custom Success Rate Metric\n *\n * true  = successful request\n * false = failed request\n */\nexport const successfulRequests = new Rate(\"successful_requests\");\n\n// ANSI Escape Codes for Terminal Formatting\nconst COLORS = {\n    // Basic Colors\n    RED: \"\\x1b[38;5;196m\", GREEN: \"\\x1b[38;5;46m\", YELLOW: \"\\x1b[38;2;255;255;0m\", BLUE: \"\\x1b[38;2;189;147;249m\", MAGENTA: \"\\x1b[38;2;255;0;127m\", CYAN: \"\\x1b[38;2;100;255;255m\",\n\n    // Bright Colors\n    BRIGHT_RED: \"\\x1b[38;2;255;85;85m\", BRIGHT_GREEN: \"\\x1b[38;5;83m\", BRIGHT_YELLOW: \"\\x1b[38;2;255;255;0m\", BRIGHT_BLUE: \"\\x1b[38;2;255;121;198m\", BRIGHT_MAGENTA: \"\\x1b[38;2;255;100;255m\", BRIGHT_CYAN: \"\\x1b[38;2;0;255;255m\",\n\n    // Formatting\n    RESET: \"\\x1b[0m\",\n    BOLD: \"\\x1b[1m\"\n};\n\nconst COLOR_TAGS = {\n    ERROR_TAG: `${COLORS.RED}[  ERROR]${COLORS.RESET}`, INFO_TAG: `${COLORS.GREEN}[   INFO]${COLORS.RESET}`, WARN_TAG: `${COLORS.YELLOW}[   WARN]${COLORS.RESET}`, SUCCESS_TAG: `${COLORS.GREEN}[SUCCESS]${COLORS.RESET}`, DEBUG_TAG: `${COLORS.CYAN}[  DEBUG]${COLORS.RESET}`\n};\n\n/**\n * Default Base URL. This value is used when no environment variable is supplied.\n *\n * @type {string}\n */\nconst DEFAULT_BASE_URL = \"https://petstore.swagger.io/v2\";\n\n/*\n * Resolve The Effective Base URL\n *\n * __ENV is a built-in k6 object that exposes environment variables.\n */\nexport const BASE_URL = __ENV.BASE_URL || DEFAULT_BASE_URL;\n\n/*\n * Print The Active Base URL Once During Initialization\n */\nconsole.log(`${COLOR_TAGS.INFO_TAG} BASE_URL=${BASE_URL}`);\n\nexport const options1 = {\n    stages: [\n        { duration: \"2s\", target: 2 },\n        { duration: \"5s\", target: 2 },\n        { duration: \"2s\", target: 0 }\n    ],\n    thresholds: {\n        http_req_duration: [ \"p(99)\u003c10000\" ]\n    },\n    // @see [No Connection Reuse](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/#no-connection-reuse)\n    noConnectionReuse: true\n};\n\nexport const options = {\n    stages: [\n        { duration: \"1s\", target: 2 },\n        { duration: \"2s\", target: 2 },\n        { duration: \"1s\", target: 0 }\n    ],\n    thresholds: {\n        http_req_duration: [ \"p(99)\u003c10000\" ]\n    },\n    // @see [No Connection Reuse](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/#no-connection-reuse)\n    noConnectionReuse: true\n};\n\n/**\n * Custom Summary Handler.\n *\n * @param {*} data data\n * @returns {object} An object where keys are output destinations (e.g., \"stdout\", \"file.txt\") and values are the content to write.\n */\nexport function handleSummary(data) {\n\n    const summary = {\n        duration_ms: data.state.testRunDurationMs,\n\n        checks: {\n            passed: data.metrics.checks.values.passes,\n            failed: data.metrics.checks.values.fails,\n            rate: data.metrics.checks.values.rate\n        },\n\n        http: {\n            requests: data.metrics.http_reqs.values.count,\n            failed_rate: data.metrics.http_req_failed.values.rate,\n            duration_ms: {\n                avg: data.metrics.http_req_duration.values.avg,\n                min: data.metrics.http_req_duration.values.min,\n                med: data.metrics.http_req_duration.values.med,\n                max: data.metrics.http_req_duration.values.max,\n                p90: data.metrics.http_req_duration.values[\"p(90)\"],\n                p95: data.metrics.http_req_duration.values[\"p(95)\"]\n            }\n        },\n\n        iterations: data.metrics.iterations.values.count,\n\n        vus: {\n            max: data.metrics.vus_max.values.value\n        },\n\n        custom_metrics: {\n            successful_requests: data.metrics.successful_requests?.values?.rate ?? null\n        }\n    };\n\n    return {\n\n        /*\n         * Print Human Readable Summary To Console\n         *\n         * enableColors=true keeps ANSI terminal colors.\n         */\n        \"stdout\": textSummary(data, { indent: \" \", enableColors: true })\n\n        /*\n         * Save Human Readable Summary To File\n         *\n         * enableColors=false avoids ANSI escape sequences\n         * inside the text file.\n         */\n        // \"k6-summary.txt\": textSummary(data, { indent: \" \", enableColors: false }),\n\n        /*\n         * Save Raw JSON Metrics\n         *\n         * JSON.stringify formatting:\n         *\n         *   null -\u003e no replacer function\n         *   4    -\u003e pretty-print indentation\n         */\n        // \"k6-detailed-summary.json\": JSON.stringify(data, null, 4),\n\n        // \"k6-summary.json\": JSON.stringify(summary, null, 2)\n    };\n}\n\n/**\n * Setup function that runs once before the test starts. We can use this to create any necessary data or perform setup tasks.\n *\n * @returns {object} Data that can be passed to the default function for use by VUs.\n */\nexport function setup() {\n    const petId = Math.floor(Math.random() * 1000000) + 1000;\n    const payload = JSON.stringify({ id: petId, name: \"SetupPet\", status: \"available\" });\n\n    const res = http.post(`${BASE_URL}/pet`, payload, {\n        headers: { \"Content-Type\": \"application/json\" }\n    });\n\n    /*\n     * Record Success Metric\n     */\n    successfulRequests.add(\n        res.status === 200 || res.status === 201\n    );\n\n    // ADD THIS TO SEE WHY SETUP FAILED\n    if (res.status !== 200 \u0026\u0026 res.status !== 201) {\n        // console.log(`${COLORS.RED}[ERROR]${COLORS.RESET} Status: ${res.status}, Body: ${res.body}`);\n        console.log(`${COLOR_TAGS.ERROR_TAG} Status: ${res.status}, Body: ${res.body}`);\n    } else {\n        // console.log(`${COLORS.GREEN}[ INFO]${COLORS.RESET} Created Pet ID: ${petId} with status ${res.status}`);\n        console.log(`${COLOR_TAGS.INFO_TAG} Created Pet ID: ${petId} with status ${res.status}`);\n    }\n\n    check(res, {\n        \"setup created pet successfully\": (r) =\u003e r.status === 200 || r.status === 201\n    });\n\n    // Whatever you return here becomes the 'data' object\n    // eslint-disable-next-line object-shorthand\n    return { petId: petId };\n}\n\n/**\n * Main function that runs the test scenario.\n *\n * @param {object} data The data object returned from the setup function, containing any necessary information for the test.\n */\nexport default function (data) {\n\n    /*\n     * 1. Define the Pet Payload\n     * We use a unique ID based on the timestamp or a random number\n     */\n\n    // Modern way to get VU ID: exec.vu.idInTest\n    const vuId = exec.vu.idInTest;\n\n    // --- STEP 2: GET (Retrieve the Pet) ---\n\n    // Now data.petId is defined!\n    const url = `${BASE_URL}/pet/${data.petId}`;\n    const res = http.get(url);\n\n    /*\n     * Record Success Metric\n     */\n    successfulRequests.add(res.status === 200);\n\n    /*\n     *\n     * check(res, {\n     *     [`status is 200 | ${url}`]: (r) =\u003e r.status === 200\n     * });\n     */\n\n    check(res, {\n        [`GET pet succeeded | ${url}`]: (r) =\u003e {\n            if (r.status !== 200) {\n                console.log(`${COLOR_TAGS.ERROR_TAG} [VU ${vuId}] GET failed status=${r.status} body=${r.body}`);\n            }\n            return r.status === 200;\n        }\n    });\n\n    if (res.status === 200) {\n        console.log(`${COLOR_TAGS.INFO_TAG} [VU ${vuId}] Verified Pet: ${data.petId}`);\n    } else {\n        console.log(`${COLOR_TAGS.ERROR_TAG} [VU ${vuId}] FAILED Pet: ${data.petId} status=${res.status}`);\n    }\n\n    sleep(1);\n}\n"},"kind":"ConfigMap","metadata":{"annotations":{},"creationTimestamp":null,"name":"k6-scripts-config","namespace":"k6"}}
+  managedFields:
+    - manager: kubectl-client-side-apply
+      operation: Update
+      apiVersion: v1
+      time: '2026-06-10T23:40:00Z'
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:data':
+          .: {}
+          'f:k6-scripts-config.js': {}
+        'f:metadata':
+          'f:annotations':
+            .: {}
+            'f:kubectl.kubernetes.io/last-applied-configuration': {}
+data:
+  k6-scripts-config.js: |
+    /* eslint-disable camelcase */
+    /* eslint-disable @stylistic/max-len */
+    // @ts-nocheck
+
+    /**
+     * K6 Pizza Test..
+     * https://petstore3.swagger.io/
+     *
+     * @author Dave Spriet (spriet@ca.ibm.com)
+     * @file k6-swagger-test.ts
+     * @see [globals](https://github.com/sindresorhus/globals)
+     * @see [Performance testing with Grafana k6 and GitHub Actions](https://grafana.com/blog/performance-testing-with-grafana-k6-and-github-actions)
+     * @see [Mastering Performance Testing with K6 and JavaScript.](https://blog.stackademic.com/mastering-performance-testing-with-k6-and-javascript-6349ed235458)
+     * @see [Performance Testing Using K6](https://www.linkedin.com/pulse/performance-testing-using-k6-priya-nupur-evhwc)
+     * @see [No Connection Reuse](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/#no-connection-reuse)
+     * @example
+     * ```bash
+     * k6 run k6-swagger-test-pet.js
+     *
+     * k6 run -e BASE_URL=http://rhel-lab1:8080/api/v3 k6-swagger-test-pet.js
+     *
+     * BASE_URL=http://rhel-lab1:8080/api/v3 k6 run k6-swagger-test-pet.js
+     * ```
+     */
+    import { textSummary } from "https://jslib.k6.io/k6-summary/0.0.2/index.js";
+    import { check, sleep } from "k6";
+    import exec from "k6/execution"; // Import execution to get VU info
+    import http from "k6/http";
+    import { Rate } from "k6/metrics";
+
+    /**
+     * Custom Success Rate Metric
+     *
+     * true  = successful request
+     * false = failed request
+     */
+    export const successfulRequests = new Rate("successful_requests");
+
+    // ANSI Escape Codes for Terminal Formatting
+    const COLORS = {
+        // Basic Colors
+        RED: "\x1b[38;5;196m", GREEN: "\x1b[38;5;46m", YELLOW: "\x1b[38;2;255;255;0m", BLUE: "\x1b[38;2;189;147;249m", MAGENTA: "\x1b[38;2;255;0;127m", CYAN: "\x1b[38;2;100;255;255m",
+
+        // Bright Colors
+        BRIGHT_RED: "\x1b[38;2;255;85;85m", BRIGHT_GREEN: "\x1b[38;5;83m", BRIGHT_YELLOW: "\x1b[38;2;255;255;0m", BRIGHT_BLUE: "\x1b[38;2;255;121;198m", BRIGHT_MAGENTA: "\x1b[38;2;255;100;255m", BRIGHT_CYAN: "\x1b[38;2;0;255;255m",
+
+        // Formatting
+        RESET: "\x1b[0m",
+        BOLD: "\x1b[1m"
+    };
+
+    const COLOR_TAGS = {
+        ERROR_TAG: `${COLORS.RED}[  ERROR]${COLORS.RESET}`, INFO_TAG: `${COLORS.GREEN}[   INFO]${COLORS.RESET}`, WARN_TAG: `${COLORS.YELLOW}[   WARN]${COLORS.RESET}`, SUCCESS_TAG: `${COLORS.GREEN}[SUCCESS]${COLORS.RESET}`, DEBUG_TAG: `${COLORS.CYAN}[  DEBUG]${COLORS.RESET}`
+    };
+
+    /**
+     * Default Base URL. This value is used when no environment variable is supplied.
+     *
+     * @type {string}
+     */
+    const DEFAULT_BASE_URL = "https://petstore.swagger.io/v2";
+
+    /*
+     * Resolve The Effective Base URL
+     *
+     * __ENV is a built-in k6 object that exposes environment variables.
+     */
+    export const BASE_URL = __ENV.BASE_URL || DEFAULT_BASE_URL;
+
+    /*
+     * Print The Active Base URL Once During Initialization
+     */
+    console.log(`${COLOR_TAGS.INFO_TAG} BASE_URL=${BASE_URL}`);
+
+    export const options1 = {
+        stages: [
+            { duration: "2s", target: 2 },
+            { duration: "5s", target: 2 },
+            { duration: "2s", target: 0 }
+        ],
+        thresholds: {
+            http_req_duration: [ "p(99)<10000" ]
+        },
+        // @see [No Connection Reuse](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/#no-connection-reuse)
+        noConnectionReuse: true
+    };
+
+    export const options = {
+        stages: [
+            { duration: "1s", target: 2 },
+            { duration: "2s", target: 2 },
+            { duration: "1s", target: 0 }
+        ],
+        thresholds: {
+            http_req_duration: [ "p(99)<10000" ]
+        },
+        // @see [No Connection Reuse](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/#no-connection-reuse)
+        noConnectionReuse: true
+    };
+
+    /**
+     * Custom Summary Handler.
+     *
+     * @param {*} data data
+     * @returns {object} An object where keys are output destinations (e.g., "stdout", "file.txt") and values are the content to write.
+     */
+    export function handleSummary(data) {
+
+        const summary = {
+            duration_ms: data.state.testRunDurationMs,
+
+            checks: {
+                passed: data.metrics.checks.values.passes,
+                failed: data.metrics.checks.values.fails,
+                rate: data.metrics.checks.values.rate
+            },
+
+            http: {
+                requests: data.metrics.http_reqs.values.count,
+                failed_rate: data.metrics.http_req_failed.values.rate,
+                duration_ms: {
+                    avg: data.metrics.http_req_duration.values.avg,
+                    min: data.metrics.http_req_duration.values.min,
+                    med: data.metrics.http_req_duration.values.med,
+                    max: data.metrics.http_req_duration.values.max,
+                    p90: data.metrics.http_req_duration.values["p(90)"],
+                    p95: data.metrics.http_req_duration.values["p(95)"]
+                }
+            },
+
+            iterations: data.metrics.iterations.values.count,
+
+            vus: {
+                max: data.metrics.vus_max.values.value
+            },
+
+            custom_metrics: {
+                successful_requests: data.metrics.successful_requests?.values?.rate ?? null
+            }
+        };
+
+        return {
+
+            /*
+             * Print Human Readable Summary To Console
+             *
+             * enableColors=true keeps ANSI terminal colors.
+             */
+            "stdout": textSummary(data, { indent: " ", enableColors: true })
+
+            /*
+             * Save Human Readable Summary To File
+             *
+             * enableColors=false avoids ANSI escape sequences
+             * inside the text file.
+             */
+            // "k6-summary.txt": textSummary(data, { indent: " ", enableColors: false }),
+
+            /*
+             * Save Raw JSON Metrics
+             *
+             * JSON.stringify formatting:
+             *
+             *   null -> no replacer function
+             *   4    -> pretty-print indentation
+             */
+            // "k6-detailed-summary.json": JSON.stringify(data, null, 4),
+
+            // "k6-summary.json": JSON.stringify(summary, null, 2)
+        };
+    }
+
+    /**
+     * Setup function that runs once before the test starts. We can use this to create any necessary data or perform setup tasks.
+     *
+     * @returns {object} Data that can be passed to the default function for use by VUs.
+     */
+    export function setup() {
+        const petId = Math.floor(Math.random() * 1000000) + 1000;
+        const payload = JSON.stringify({ id: petId, name: "SetupPet", status: "available" });
+
+        const res = http.post(`${BASE_URL}/pet`, payload, {
+            headers: { "Content-Type": "application/json" }
+        });
+
+        /*
+         * Record Success Metric
+         */
+        successfulRequests.add(
+            res.status === 200 || res.status === 201
+        );
+
+        // ADD THIS TO SEE WHY SETUP FAILED
+        if (res.status !== 200 && res.status !== 201) {
+            // console.log(`${COLORS.RED}[ERROR]${COLORS.RESET} Status: ${res.status}, Body: ${res.body}`);
+            console.log(`${COLOR_TAGS.ERROR_TAG} Status: ${res.status}, Body: ${res.body}`);
+        } else {
+            // console.log(`${COLORS.GREEN}[ INFO]${COLORS.RESET} Created Pet ID: ${petId} with status ${res.status}`);
+            console.log(`${COLOR_TAGS.INFO_TAG} Created Pet ID: ${petId} with status ${res.status}`);
+        }
+
+        check(res, {
+            "setup created pet successfully": (r) => r.status === 200 || r.status === 201
+        });
+
+        // Whatever you return here becomes the 'data' object
+        // eslint-disable-next-line object-shorthand
+        return { petId: petId };
+    }
+
+    /**
+     * Main function that runs the test scenario.
+     *
+     * @param {object} data The data object returned from the setup function, containing any necessary information for the test.
+     */
+    export default function (data) {
+
+        /*
+         * 1. Define the Pet Payload
+         * We use a unique ID based on the timestamp or a random number
+         */
+
+        // Modern way to get VU ID: exec.vu.idInTest
+        const vuId = exec.vu.idInTest;
+
+        // --- STEP 2: GET (Retrieve the Pet) ---
+
+        // Now data.petId is defined!
+        const url = `${BASE_URL}/pet/${data.petId}`;
+        const res = http.get(url);
+
+        /*
+         * Record Success Metric
+         */
+        successfulRequests.add(res.status === 200);
+
+        /*
+         *
+         * check(res, {
+         *     [`status is 200 | ${url}`]: (r) => r.status === 200
+         * });
+         */
+
+        check(res, {
+            [`GET pet succeeded | ${url}`]: (r) => {
+                if (r.status !== 200) {
+                    console.log(`${COLOR_TAGS.ERROR_TAG} [VU ${vuId}] GET failed status=${r.status} body=${r.body}`);
+                }
+                return r.status === 200;
+            }
+        });
+
+        if (res.status === 200) {
+            console.log(`${COLOR_TAGS.INFO_TAG} [VU ${vuId}] Verified Pet: ${data.petId}`);
+        } else {
+            console.log(`${COLOR_TAGS.ERROR_TAG} [VU ${vuId}] FAILED Pet: ${data.petId} status=${res.status}`);
+        }
+
+        sleep(1);
+    }

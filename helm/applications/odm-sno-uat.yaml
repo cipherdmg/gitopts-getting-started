@@ -1,0 +1,32 @@
+# https://argo-cd.readthedocs.io/en/latest/user-guide/helm/
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: odm-sno-uat
+  # namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/cipherdmg/gitopts-getting-started.git
+    targetRevision: main
+
+    # Path is relative to repo root
+    chart: ibm-odm-prod
+    helm:
+      releaseName: odm-sno-uat
+      valueFiles:
+        - helm/values/odm-sno-uat.yaml
+
+    # IMPORTANT: this tells Argo CD where the chart lives in the repo
+    path: helm/helm
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: odm-sno-uat
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

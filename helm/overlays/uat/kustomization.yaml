@@ -1,0 +1,103 @@
+# resources:
+#   - all.yaml
+# patches:
+# - target:
+#     group: apps
+#     version: v1
+#     kind: Deployment
+#     name: ".*-decisionserverruntime"
+#   patch: |-
+#     - op: add
+#       path: /spec/template/spec/terminationGracePeriodSeconds
+#       value: 90
+#     - op: remove
+#       path: /spec/template/spec/containers/0/livenessProbe/httpGet
+#     - op: add
+#       path: /spec/template/spec/containers/0/livenessProbe/exec
+#       value:
+#         command:
+#           - curl
+#           - -k
+#           - https://localhost:9443/DecisionService/
+#           - --cert
+#           - /opt/ibm/wlp/usr/servers/defaultServer/security/volume/tls.crt
+#           - --key
+#           - /opt/ibm/wlp/usr/servers/defaultServer/security/volume/tls.key
+#     - op: remove
+#       path: /spec/template/spec/containers/0/readinessProbe/httpGet
+#     - op: add
+#       path: /spec/template/spec/containers/0/readinessProbe/exec
+#       value:
+#         command:
+#           - cat
+#           - /opt/ibm/wlp/usr/servers/defaultServer/serverStartupCheck.complete
+#     - op: remove
+#       path: /spec/template/spec/containers/0/startupProbe/httpGet
+#     - op: add
+#       path: /spec/template/spec/containers/0/startupProbe/exec
+#       value:
+#         command:
+#           - curl
+#           - -k
+#           - https://localhost:9443/DecisionService/
+#           - --cert
+#           - /opt/ibm/wlp/usr/servers/defaultServer/security/volume/tls.crt
+#           - --key
+#           - /opt/ibm/wlp/usr/servers/defaultServer/security/volume/tls.key
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../rendered/uat/all.yaml
+
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: ".*-decisionserverruntime"
+
+    patch: |-
+      - op: add
+        path: /spec/template/spec/terminationGracePeriodSeconds
+        value: 90
+
+      - op: remove
+        path: /spec/template/spec/containers/0/livenessProbe/httpGet
+
+      - op: add
+        path: /spec/template/spec/containers/0/livenessProbe/exec
+        value:
+          command:
+            - curl
+            - -k
+            - https://localhost:9443/DecisionService/
+            - --cert
+            - /opt/ibm/wlp/usr/servers/defaultServer/security/volume/tls.crt
+            - --key
+            - /opt/ibm/wlp/usr/servers/defaultServer/security/volume/tls.key
+
+      - op: remove
+        path: /spec/template/spec/containers/0/readinessProbe/httpGet
+
+      - op: add
+        path: /spec/template/spec/containers/0/readinessProbe/exec
+        value:
+          command:
+            - cat
+            - /opt/ibm/wlp/usr/servers/defaultServer/serverStartupCheck.complete
+
+      - op: remove
+        path: /spec/template/spec/containers/0/startupProbe/httpGet
+
+      - op: add
+        path: /spec/template/spec/containers/0/startupProbe/exec
+        value:
+          command:
+            - curl
+            - -k
+            - https://localhost:9443/DecisionService/
+            - --cert
+            - /opt/ibm/wlp/usr/servers/defaultServer/security/volume/tls.crt
+            - --key
+            - /opt/ibm/wlp/usr/servers/defaultServer/security/volume/tls.key
