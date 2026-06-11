@@ -17,7 +17,8 @@ spec:
       releaseName: odm-sno-uat
       valueFiles:
         # - helm/values/odm-sno-uat.yaml
-        - ../values/odm-sno-uat.yaml
+        # - ../values/odm-sno-uat.yaml
+        - helm/values/odm-sno-uat.yaml
 
     # IMPORTANT: this tells Argo CD where the chart lives in the repo
     path: helm/helm/ibm-odm-prod

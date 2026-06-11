@@ -1,0 +1,31 @@
+# https://www.redhat.com/en/blog/continuous-delivery-with-helm-and-argo-cd
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: quarkus-subchart
+  namespace: openshift-gitops
+spec:
+  destination:
+    namespace: test
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: quarkus-subchart/
+    repoURL: https://github.com/christianh814/gitops-examples
+    targetRevision: master
+  sync:
+    comparedTo:
+      destination:
+        namespace: test
+        server: https://kubernetes.default.svc
+      source:
+        path: quarkus-subchart/
+        repoURL: https://github.com/christianh814/gitops-examples
+        targetRevision: master
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ibm-odm-sno-uat
+  namespace: openshift-gitops # Standard for OpenShift GitOps Operator
+spec:
+  project: default
+  sources:
+    # Source A: Used only to provide a reference to your repo root
+    - repoURL: 'https://github.com/cipherdmg/gitopts-getting-started'
+      targetRevision: HEAD
+      ref: values-repo
+
+    # Source B: The actual Helm chart
+    - repoURL: 'https://github.com/cipherdmg/gitopts-getting-started'
+      targetRevision: HEAD
+      path: helm/helm/ibm-odm-prod-25.1.10.tgz
+      helm:
+        # Use the 'values-repo' reference to point to the file
+        valueFiles:
+          - $values-repo/helm/values/odm-sno-uat.yaml
+
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: ibm-odm-uat # Ensure this namespace exists or use CreateNamespace=true
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
