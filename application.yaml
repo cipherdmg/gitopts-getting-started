@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bgd
+  namespace: openshift-gitops
+spec:
+  destination:
+    namespace: bgd
+    server: https://kubernetes.default.svc
+  source:
+    path: .                                    # <-- Change this to the root directory
+    repoURL: https://github.com/cipherdmg/gitopts-getting-started
+    targetRevision: HEAD
+  project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
