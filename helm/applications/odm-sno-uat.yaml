@@ -22,6 +22,10 @@ spec:
     - repoURL: 'https://github.com/cipherdmg/gitopts-getting-started'
       targetRevision: HEAD
       ref: values-repo
+  # Source 3: Raw Manifests Directory (Your Secrets/Overlays)
+    - repoURL: 'https://github.com/cipherdmg/gitopts-getting-started'
+      targetRevision: HEAD
+      path: helm/overlays/uat          # Argo CD will apply every raw YAML file in this folder
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: ibm-odm-uat
@@ -31,4 +35,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-~

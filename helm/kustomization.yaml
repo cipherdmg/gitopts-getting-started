@@ -46,10 +46,6 @@
 #           - /opt/ibm/wlp/usr/servers/defaultServer/security/volume/tls.key
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
-resources:
-  - ../../rendered/uat/all.yaml
-
 patches:
   - target:
       group: apps
