@@ -1,0 +1,65 @@
+---
+# Source: ibm-odm-prod/templates/tests/config-map-for-test.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name:  odm-sno-uat-odm-test-configmap
+  labels:
+    app: odm-sno-uat-ibm-odm-prod
+    chart: "ibm-odm-prod-25.1.10"
+    release: "odm-sno-uat"
+    heritage: "Helm"
+    app.kubernetes.io/instance: odm-sno-uat
+    app.kubernetes.io/name: ibm-odm-prod
+    app.kubernetes.io/version: "9.5.0.1-IF010"
+    app.kubernetes.io/component: odm-test
+    app.kubernetes.io/part-of: odm
+    app.kubernetes.io/managed-by: helm
+    helm.sh/chart: ibm-odm-prod-25.1.10
+data:
+  suite.sh: |-
+    #!/bin/bash
+    if [ $DECISION_RUNNER_ENABLED = "true" ]
+    then
+      sh /tests/wait-for-url.sh $PROTOCOL://$DECISION_RUNNER_NAME:9443/DecisionRunner
+    fi
+
+    if [ $DECISION_SERVER_RUNTIME_ENABLED = "true" ]
+    then
+      sh /tests/wait-for-url.sh $PROTOCOL://$DECISION_SERVER_RUNTIME_NAME:9443/DecisionService resExecutor resExecutor
+    fi
+
+    if [ $DECISION_CENTER_ENABLED = "true" ]
+    then
+      sh /tests/wait-for-url.sh $PROTOCOL://$DECISION_CENTER_NAME:9453/decisioncenter/t
+      sh /tests/wait-for-url.sh $PROTOCOL://$DECISION_CENTER_NAME:9453/decisioncenter/assets/decision-center-client-api.zip
+    fi
+
+    if [ $DECISION_SERVER_CONSOLE_ENABLED = "true" ]
+    then
+      sh /tests/wait-for-url.sh $PROTOCOL://$DECISION_SERVER_CONSOLE_NAME:9443/res
+    fi
+
+  wait-for-url.sh: |-
+    #!/bin/bash
+    echo "Testing url $1 availabilty."
+
+    if [ $# -ge 3 ]
+    then
+      echo "authentication is enabled."
+      auth="-u $2:$3"
+    fi
+
+    i=0
+    until $(curl -k $auth --connect-timeout 180 --output /dev/null --silent --head --fail $1); do
+        printf '.'
+        i=$((i+1))
+        if [ $i -gt 10 ]
+        then
+            printf " $1 NOT available\n"
+            exit 1
+        fi
+        sleep 15
+    done
+
+    printf "OK\n"

@@ -1,0 +1,122 @@
+---
+# Source: ibm-odm-prod/templates/tests/test-pattern.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name:  odm-sno-uat-odm-test
+  labels:
+    run: odm-test
+    app: odm-sno-uat-ibm-odm-prod
+    chart: "ibm-odm-prod-25.1.10"
+    release: "odm-sno-uat"
+    heritage: "Helm"
+    app.kubernetes.io/instance: odm-sno-uat
+    app.kubernetes.io/name: ibm-odm-prod
+    app.kubernetes.io/version: "9.5.0.1-IF010"
+    app.kubernetes.io/component: odm-test
+    app.kubernetes.io/part-of: odm
+    app.kubernetes.io/managed-by: helm
+    helm.sh/chart: ibm-odm-prod-25.1.10
+  annotations:
+    helm.sh/hook: test
+spec:
+  template:
+    metadata:
+      labels:
+        run: odm-test
+        app: odm-sno-uat-ibm-odm-prod
+        chart: "ibm-odm-prod-25.1.10"
+        release: "odm-sno-uat"
+        heritage: "Helm"
+        app.kubernetes.io/instance: odm-sno-uat
+        app.kubernetes.io/name: ibm-odm-prod
+        app.kubernetes.io/version: "9.5.0.1-IF010"
+        app.kubernetes.io/component: odm-test
+        app.kubernetes.io/part-of: odm
+        app.kubernetes.io/managed-by: helm
+        helm.sh/chart: ibm-odm-prod-25.1.10
+    spec:
+      serviceAccountName: odm-sno-uat-ibm-odm-prod-service-account
+      automountServiceAccountToken: false
+      hostNetwork: false
+      hostPID: false
+      hostIPC: false
+      securityContext:
+        runAsNonRoot: true
+        
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - ppc64le
+                - s390x
+      containers:
+      - name: odm-sno-uat-odm-test
+        image: cp.icr.io/cp/cp4a/odm/odm-decisionserverruntime:9.5.0.1-IF010
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+            ephemeral-storage: "2Mi"
+          limits:
+            cpu: 2
+            memory: 4096Mi
+            ephemeral-storage: "6Mi"
+        securityContext:
+          runAsNonRoot: true
+          privileged: false
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        env:
+          - name: DBSERVER
+            value: odm-sno-uat-dbserver
+          - name: PROTOCOL
+            value: "https"
+          - name: DECISION_SERVER_CONSOLE_NAME
+            value: odm-sno-uat-odm-decisionserverconsole
+          - name: DECISION_SERVER_CONSOLE_ENABLED
+            value: "true"
+          - name: DECISION_SERVER_RUNTIME_NAME
+            value: odm-sno-uat-odm-decisionserverruntime
+          - name: DECISION_SERVER_RUNTIME_ENABLED
+            value: "true"
+          - name: DECISION_CENTER_NAME
+            value: odm-sno-uat-odm-decisioncenter
+          - name: DECISION_CENTER_ENABLED
+            value: "true"
+          - name: DECISION_RUNNER_NAME
+            value: odm-sno-uat-odm-decisionrunner
+          - name: DECISION_RUNNER_ENABLED
+            value: "false"
+          - name: PERSISTENCECLAIM
+            value: odm-sno-uat-odm-pvclaim
+          - name: HTTPPROTOCOL
+            value: "https"
+        command: ["/bin/bash", "-c", "/tests/suite.sh"]
+        volumeMounts:
+          - name: tests
+            mountPath: /tests
+          -
+            name: tmp-folder-emptydir
+            mountPath: /tmp
+      volumes:
+        - name: tests
+          configMap:
+            defaultMode: 0755
+            name: odm-sno-uat-odm-test-configmap
+        - name: tmp-folder-emptydir
+          emptyDir: {}
+      restartPolicy: Never      
+      imagePullSecrets:
+        - name: ibm-entitlement-key

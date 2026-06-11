@@ -1,0 +1,355 @@
+---
+# Source: ibm-odm-prod/templates/ds-runtime-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: odm-sno-uat-odm-decisionserverruntime
+  labels:
+    run: odm-sno-uat-odm-decisionserverruntime
+    app: odm-sno-uat-ibm-odm-prod
+    chart: "ibm-odm-prod-25.1.10"
+    release: "odm-sno-uat"
+    heritage: "Helm"
+    app.kubernetes.io/instance: odm-sno-uat
+    app.kubernetes.io/name: ibm-odm-prod
+    app.kubernetes.io/version: "9.5.0.1-IF010"
+    app.kubernetes.io/component: decisionServerRuntime
+    app.kubernetes.io/part-of: odm
+    app.kubernetes.io/managed-by: helm
+    helm.sh/chart: ibm-odm-prod-25.1.10
+spec:
+  selector:
+    matchLabels:
+      release: "odm-sno-uat"
+      run: odm-sno-uat-odm-decisionserverruntime
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        run: odm-sno-uat-odm-decisionserverruntime
+        app: odm-sno-uat-ibm-odm-prod
+        chart: "ibm-odm-prod-25.1.10"
+        release: "odm-sno-uat"
+        heritage: "Helm"
+        app.kubernetes.io/instance: odm-sno-uat
+        app.kubernetes.io/name: ibm-odm-prod
+        app.kubernetes.io/version: "9.5.0.1-IF010"
+        app.kubernetes.io/component: decisionServerRuntime
+        app.kubernetes.io/part-of: odm
+        app.kubernetes.io/managed-by: helm
+        helm.sh/chart: ibm-odm-prod-25.1.10
+      annotations:
+        
+        productName: "IBM Operational Decision Manager - Non Prod"
+        productID: "e32af5770e06427faae142993c691048"
+        productVersion: "9.5.0.1-IF010"
+        productMetric: "PROCESSOR_VALUE_UNIT"
+        productChargedContainers: "odm-decisionserverruntime"
+        kubectl.kubernetes.io/default-container: "odm-decisionserverruntime"
+        
+    spec:
+      serviceAccountName: odm-sno-uat-ibm-odm-prod-service-account
+      automountServiceAccountToken: false
+      hostNetwork: false
+      hostPID: false
+      hostIPC: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 
+        fsGroup: 
+        
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          #If you specify multiple nodeSelectorTerms associated with nodeAffinity types,
+          #then the pod can be scheduled onto a node if one of the nodeSelectorTerms is satisfied.
+          #
+          #If you specify multiple matchExpressions associated with nodeSelectorTerms,
+          #then the pod can be scheduled onto a node only if all matchExpressions can be satisfied.
+          #
+          #valid operators: In, NotIn, Exists, DoesNotExist, Gt, Lt
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - ppc64le
+                - s390x
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: run
+                  operator: In
+                  values:
+                  - odm-sno-uat-odm-decisionserverruntime
+              topologyKey: "kubernetes.io/hostname"
+      volumes:      
+      - name: db-config-secret
+        secret:
+          secretName: odm-sno-uat-odm-secret
+            
+            
+      - name: odm-sno-uat-odm-auth-secret-volume        
+        secret:
+          secretName: odm-sno-uat-ds-auth-sso
+            
+      - name: checkdb-secret
+        secret:
+          secretName: odm-sno-uat-odm-secret
+            
+      - name: config-folder-emptydir
+        emptyDir: {}
+      - name: nssdb-folder-emptydir
+        emptyDir: {}
+      - name: tmp-folder-emptydir
+        emptyDir: {}
+      - name: tmp-liberty-output-folder-emptydir
+        emptyDir: {}
+      - name: logs-folder-emptydir
+        emptyDir: {}
+      - name: support-folder-emptydir
+        emptyDir: {}
+            
+      - name: tls-stores
+        emptyDir: {}
+            
+            
+
+      - name: odm-sno-uat-odm-logging-volume
+        configMap:
+          name: odm-sno-uat-odm-ds-runtime-logging-configmap
+          items:
+           - key: dsr-logging
+             path: logging.xml
+      - name: odm-sno-uat-odm-jvm-options-volume
+        configMap:
+          name: odm-sno-uat-odm-ds-runtime-jvm-options-configmap
+          items:
+           - key: dsr-jvm-options
+             path: jvm.options
+      - name: lib-workarea-volume
+        emptyDir: {}
+      - name: odm-sno-uat-odm-ds-runtime-xuconfigref-volume
+        configMap:
+          name: odm-sno-uat-odm-ds-runtime-xu-configmap
+      - name: odm-sno-uat-odm-ds-runtime-webconfigref-volume
+        configMap:
+          name: odm-sno-uat-odm-ds-runtime-web-configmap
+      
+      
+      initContainers:
+      - name: init-folder-readonlyfs
+        image: cp.icr.io/cp/cp4a/odm/odm-decisionserverruntime:9.5.0.1-IF010
+        imagePullPolicy: IfNotPresent
+        
+        env:
+          - name: ENABLE_FIPS
+            value: "false"
+        securityContext:
+          runAsUser: 
+          runAsNonRoot: true
+          privileged: false
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+          -
+            name: config-folder-emptydir
+            mountPath: /config-folder
+          -
+            name: nssdb-folder-emptydir
+            mountPath: /nssdb-folder
+          -
+            name: support-folder-emptydir
+            mountPath: /support-folder
+        command:
+          - "/bin/sh"
+          - "-ecx"
+          - >
+            $(rm -rf /config-folder/* 2>/dev/null;true) &&
+            cp -rp /opt/ibm/wlp/usr/servers/defaultServer/* /config-folder &&
+            if [ -d /etc/pki/nssdb ]; then cp -rp /etc/pki/nssdb/* /nssdb-folder; fi &&
+            $(if [ -d /support ]; then cp -R /support/* /support-folder 2>/dev/null; fi;true)
+        resources:
+            requests:
+              cpu: 200m
+              memory: 100Mi
+            limits:
+              cpu: 500m
+              memory: 200Mi
+      - name: init-decisionserverruntime
+        image: cp.icr.io/cp/cp4a/odm/dbserver:9.5.0.1-IF010
+        securityContext:
+          runAsUser: 
+          runAsNonRoot: true
+          privileged: false
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        command: ['/usr/local/bin/checkdb.sh']
+        env:
+        - name: PGDATABASE
+          value: "odmdb"
+        - name: PGCONNECT_TIMEOUT
+          value: "2"
+        - name: PGHOST
+          value: odm-sno-uat-dbserver
+        - name: PGUSER_FILE
+          value: /var/run/postgresql/secrets/db-user
+        - name: PGPASSWORD_FILE
+          value: /var/run/postgresql/secrets/db-password
+        volumeMounts:
+        - name: checkdb-secret
+          mountPath: "/var/run/postgresql/secrets/"
+          readOnly: true
+        resources:
+          requests:
+            cpu: 200m
+            memory: 100Mi
+          limits:
+            cpu: 500m
+            memory: 200Mi
+      
+      containers:
+      - name: odm-decisionserverruntime
+        image: cp.icr.io/cp/cp4a/odm/odm-decisionserverruntime:9.5.0.1-IF010
+        securityContext:
+          runAsUser: 
+          runAsNonRoot: true
+          privileged: false
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:        
+        - name: db-config-secret
+          mountPath: /opt/ibm/wlp/usr/servers/defaultServer/secrets/db-config
+          readOnly: true
+        
+        
+        
+        -
+          name: config-folder-emptydir
+          mountPath: /opt/ibm/wlp/usr/servers/defaultServer
+        -
+          name: nssdb-folder-emptydir
+          mountPath: /etc/pki/nssdb
+        -
+          name: tmp-folder-emptydir
+          mountPath: /tmp
+        -
+          name: tmp-liberty-output-folder-emptydir
+          mountPath: /opt/ibm/wlp/output/defaultServer
+        -
+          name: logs-folder-emptydir
+          mountPath: /logs
+        -
+          name: support-folder-emptydir
+          mountPath: /support
+        
+        
+        
+        
+        
+        - name: odm-sno-uat-odm-auth-secret-volume
+          mountPath: "/opt/ibm/wlp/usr/servers/defaultServer/auth"
+        - name: odm-sno-uat-odm-logging-volume
+          mountPath: "/opt/ibm/wlp/usr/servers/defaultServer/logging"
+        - name: odm-sno-uat-odm-jvm-options-volume
+          mountPath: "/opt/ibm/wlp/usr/servers/defaultServer/configDropins/overrides"
+        -
+          name: lib-workarea-volume
+          mountPath: /opt/ibm/wlp/output/defaultServer/workarea
+        - name: odm-sno-uat-odm-ds-runtime-xuconfigref-volume
+          readOnly: true
+          mountPath: /opt/ibm/wlp/usr/servers/defaultServer/xu-configuration.properties
+          subPath: xu-configuration.properties
+        - name: odm-sno-uat-odm-ds-runtime-webconfigref-volume
+          readOnly: true
+          mountPath: /opt/ibm/wlp/usr/servers/defaultServer/web-configuration.properties
+          subPath: web-configuration.properties
+        env:
+          
+          - name: DB_TYPE
+            value: "postgresql"
+          - name: "DB_SERVER_NAME"
+            value: odm-sno-uat-dbserver
+          - name: DB_PORT_NUMBER
+            value: "5432"
+          - name: DB_NAME
+            value: "odmdb"
+          
+          - name: "DECISIONSERVERCONSOLE_NAME"
+            value: odm-sno-uat-odm-decisionserverconsole-notif
+          - name: "RELEASE_NAME"
+            value: odm-sno-uat
+          - name: "ENABLE_TLS"
+            value: "true"
+          - name: VERBOSEGC
+            value: "false"
+          
+          - name: "KubeVersion"
+            value: "ODM on K8s"
+          
+          
+          - name: "DEPLOY_FOR_PRODUCTION"
+            value: "FALSE"
+          
+          
+          
+        ports:
+        - name: dsr-port
+          containerPort: 9443
+        readinessProbe:
+          httpGet:
+            scheme: HTTPS
+            path: /DecisionService/
+            port: dsr-port
+          periodSeconds: 30
+          failureThreshold: 45
+          timeoutSeconds: 5
+          initialDelaySeconds: 5
+        livenessProbe:
+          httpGet:
+            scheme: HTTPS
+            path: /DecisionService/
+            port: dsr-port
+          periodSeconds: 30
+          failureThreshold: 4
+          timeoutSeconds: 5
+        startupProbe:
+          httpGet:
+            scheme: HTTPS
+            path: /DecisionService/
+            port: dsr-port
+          failureThreshold: 30
+          periodSeconds: 20
+          timeoutSeconds: 5
+          initialDelaySeconds: 15
+        resources:
+          limits:
+            cpu: 4
+            ephemeral-storage: 5Gi
+            memory: 6Gi
+          requests:
+            cpu: 1
+            ephemeral-storage: 50Mi
+            memory: 2Gi      
+      imagePullSecrets:
+        - name: ibm-entitlement-key

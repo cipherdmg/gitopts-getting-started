@@ -1,0 +1,33 @@
+---
+# Source: ibm-odm-prod/templates/dc-network-policy.yaml
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: odm-sno-uat-odm-dc-network-policy
+  labels:
+    app: odm-sno-uat-ibm-odm-prod
+    chart: "ibm-odm-prod-25.1.10"
+    release: "odm-sno-uat"
+    heritage: "Helm"
+    app.kubernetes.io/instance: odm-sno-uat
+    app.kubernetes.io/name: ibm-odm-prod
+    app.kubernetes.io/version: "9.5.0.1-IF010"
+    app.kubernetes.io/component: decisionCenter
+    app.kubernetes.io/part-of: odm
+    app.kubernetes.io/managed-by: helm
+    helm.sh/chart: ibm-odm-prod-25.1.10
+spec:
+  podSelector:
+    matchLabels:
+      run: odm-sno-uat-odm-decisioncenter
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: odm-sno-uat
+  # Allow web access to the UI
+  - ports:
+    - port: 9453
+    
+  egress:
+  - {}

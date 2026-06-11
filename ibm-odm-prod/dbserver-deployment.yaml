@@ -1,0 +1,160 @@
+---
+# Source: ibm-odm-prod/templates/dbserver-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: odm-sno-uat-dbserver
+  labels:
+    run: odm-sno-uat-dbserver
+    app: odm-sno-uat-ibm-odm-prod
+    chart: "ibm-odm-prod-25.1.10"
+    release: "odm-sno-uat"
+    heritage: "Helm"
+    app.kubernetes.io/instance: odm-sno-uat
+    app.kubernetes.io/name: ibm-odm-prod
+    app.kubernetes.io/version: "9.5.0.1-IF010"
+    app.kubernetes.io/component: dbserver
+    app.kubernetes.io/part-of: odm
+    app.kubernetes.io/managed-by: helm
+    helm.sh/chart: ibm-odm-prod-25.1.10
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      release: odm-sno-uat
+      run: odm-sno-uat-dbserver
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        run: odm-sno-uat-dbserver
+        app: odm-sno-uat-ibm-odm-prod
+        chart: "ibm-odm-prod-25.1.10"
+        release: "odm-sno-uat"
+        heritage: "Helm"
+        app.kubernetes.io/instance: odm-sno-uat
+        app.kubernetes.io/name: ibm-odm-prod
+        app.kubernetes.io/version: "9.5.0.1-IF010"
+        app.kubernetes.io/component: dbserver
+        app.kubernetes.io/part-of: odm
+        app.kubernetes.io/managed-by: helm
+        helm.sh/chart: ibm-odm-prod-25.1.10
+      annotations:
+        
+        productName: "IBM Operational Decision Manager - Non Prod"
+        productID: "e32af5770e06427faae142993c691048"
+        productVersion: "9.5.0.1-IF010"
+        productMetric: "PROCESSOR_VALUE_UNIT"
+        productChargedContainers: ""
+        
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+                - ppc64le
+                - s390x
+      serviceAccountName: odm-sno-uat-ibm-odm-prod-service-account
+      automountServiceAccountToken: false
+      hostNetwork: false
+      hostPID: false
+      hostIPC: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 
+        fsGroup: 
+        
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - name: postgres-secret
+        secret:
+          secretName: odm-sno-uat-odm-secret
+      - name: odm-sno-uat-ibm-odm-prod-volume
+        persistentVolumeClaim:
+          claimName: odm-sno-uat-odm-pvclaim
+      - name: tmp-folder-volume
+        emptyDir: {}
+      - name: pgsql-run-folder-volume
+        emptyDir: {}
+
+      containers:
+      - name: odm-sno-uat-dbserver
+        image: cp.icr.io/cp/cp4a/odm/dbserver:9.5.0.1-IF010
+        securityContext:
+          runAsUser: 
+          runAsNonRoot: true
+          privileged: false
+          readOnlyRootFilesystem:  true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: POSTGRESQL_DATABASE
+          value: "odmdb"
+        - name: POSTGRES_DB
+          value: "odmdb"
+        - name: POSTGRESQL_USER_FILE
+          value: /var/run/postgresql/secrets/db-user
+        - name: POSTGRESQL_PASSWORD_FILE
+          value: /var/run/postgresql/secrets/db-password
+        - name: SAMPLE
+          value: "true"
+        ports:
+        - name: db-port
+          containerPort: 5432
+        readinessProbe:
+          tcpSocket:
+            port: db-port
+          initialDelaySeconds: 5
+          periodSeconds: 30
+          failureThreshold: 45
+          timeoutSeconds: 5
+        livenessProbe:
+          tcpSocket:
+            port: db-port
+          periodSeconds: 30
+          failureThreshold: 4
+          timeoutSeconds: 5
+        startupProbe:
+          tcpSocket:
+            port: db-port
+          periodSeconds: 20
+          failureThreshold: 30
+          timeoutSeconds: 5
+          initialDelaySeconds: 15
+        volumeMounts:
+          - name: postgres-secret
+            mountPath: "/var/run/postgresql/secrets/"
+            readOnly: true
+          - name: odm-sno-uat-ibm-odm-prod-volume
+            mountPath: /var/lib/pgsql/
+            subPath : data
+          -
+            name: tmp-folder-volume
+            mountPath: /tmp
+          -
+            name: pgsql-run-folder-volume
+            mountPath: /var/run/postgresql
+        resources:
+          limits:
+            cpu: 2
+            ephemeral-storage: 1G
+            memory: 4096Mi
+          requests:
+            cpu: 500m
+            ephemeral-storage: 500Mi
+            memory: 512Mi      
+      imagePullSecrets:
+        - name: ibm-entitlement-key

@@ -1,0 +1,29 @@
+---
+# Source: ibm-odm-prod/templates/dbserver-pvclaim.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: odm-sno-uat-odm-pvclaim
+  labels:
+    app: odm-sno-uat-ibm-odm-prod
+    chart: "ibm-odm-prod-25.1.10"
+    release: "odm-sno-uat"
+    heritage: "Helm"
+    app.kubernetes.io/instance: odm-sno-uat
+    app.kubernetes.io/name: ibm-odm-prod
+    app.kubernetes.io/version: "9.5.0.1-IF010"
+    app.kubernetes.io/component: dbserver
+    app.kubernetes.io/part-of: odm
+    app.kubernetes.io/managed-by: helm
+    helm.sh/chart: ibm-odm-prod-25.1.10
+spec:
+  ## if present, use the storageClassName from the values.yaml, else use the
+  ## default storageClass setup by kube Administrator
+  ## setting storageClassName to nil means use the default storage class
+  storageClassName: "nfs-client-enterprise"
+
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

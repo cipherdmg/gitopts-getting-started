@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ibm-odm-uat
+
+# 1. Pull the secret first
+resources:
+  - secret-odm-sno-uat.yaml
+
+# 2. Tell Kustomize to inflate the Helm chart right here
+helmCharts:
+  - name: ibm-odm-prod
+    repo: https://github.com/cipherdmg/gitopts-getting-started
+    # Path to the directory containing your extracted Chart.yaml relative to repo root
+    path: ../../helm/helm/ibm-odm-prod
+    valuesFile: odm-sno-uat.yaml
