@@ -1,3 +1,10 @@
+#
+# oc -n "${REDHAT_GITOPTS_NAMESPACE}" get applications
+# oc -n "${REDHAT_GITOPTS_NAMESPACE}" delete application odm
+# delete_project --odm
+#
+#
+#
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -8,7 +15,7 @@ spec:
     namespace: odm-sno-uat
     server: https://kubernetes.default.svc
   source:
-    path: ibm-odm-prod                        # <-- CHANGE THIS BACK TO YOUR FOLDER
+    path: odm                        # <-- CHANGE THIS BACK TO YOUR FOLDER
     repoURL: https://github.com/cipherdmg/gitopts-getting-started
     targetRevision: HEAD
   project: default
