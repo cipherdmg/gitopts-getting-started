@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ibm-odm-sno-uat
+  namespace: openshift-gitops # Standard for OpenShift GitOps Operator
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/cipherdmg/gitopts-getting-started'
+    targetRevision: HEAD
+    # Point this to the exact directory where you placed the raw YAML files
+    path: ibm-odm-prod
+  destination:
+    server: 'https://kubernetes.default.svc'
+    # The namespace where IBM ODM will be deployed
+    namespace: ibm-odm-uat
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true # Automatically creates ibm-odm-uat if it doesn't exist
