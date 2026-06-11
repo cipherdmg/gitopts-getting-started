@@ -28,14 +28,6 @@ spec:
           capabilities:
             drop:
             - ALL
-        volumeMounts:
-        - name: auth-config
-          mountPath: /config/security
-          readOnly: true
-      volumes:
-      - name: auth-config
-        secret:
-          secretName: odm-sno-uat-ds-auth-sso
       securityContext:
         runAsNonRoot: true
         seccompProfile:
